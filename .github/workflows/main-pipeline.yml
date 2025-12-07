@@ -45,6 +45,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
+          GH_DEBUG: api
         run: |
           echo "Pipeline failed on attempt ${{ github.run_attempt }}. Triggering auto-retry..."
           gh workflow run retry-watcher.yml -F run_id=${{ github.run_id }}
