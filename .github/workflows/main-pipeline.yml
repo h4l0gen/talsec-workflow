@@ -18,12 +18,20 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - name: Run Tests
+      - name: Run Flaky Tests
         run: |
-          echo "Running Tests..."
-          # This simulates a crash. 
-          # In real life, this is your flaky obfuscation step.
-          exit 1 
+          echo "Spinning the wheel of fortune..."
+          
+          # Generate a random number (0 or 1)
+          FLAKY_CHANCE=$((RANDOM % 2))
+          
+          if [ $FLAKY_CHANCE -eq 0 ]; then
+            echo "✅ Luck is on your side! Tests PASSED."
+            exit 0
+          else
+            echo "❌ Bad luck! Network/Obfuscation error simulated."
+            exit 1
+          fi
 
   # 3. Dependent Job (Will be skipped on failure)
   publish:
@@ -37,7 +45,7 @@ jobs:
   auto-retry-trigger:
     needs: [test] # This must depend on the job that might fail
     runs-on: ubuntu-latest
-    if: failure() && fromJSON(github.run_attempt) < 3 # Run only on failure, max 3 times
+    if: failure() && fromJSON(github.run_attempt) < 4 # Run only on failure, max 3 times
     permissions:
       actions: write # Needed to trigger the watcher workflow
     steps:
