@@ -1,0 +1,35 @@
+name: Retry Watcher
+
+on:
+	workflow_dispatch:
+		inputs:
+			run_id:
+				description: "The ID of the run to verify"
+				required: true
+jobs:
+	handle-retry:
+		runs-on: ubuntu-latest
+		permissions:
+			actions: write  # to re-run the job
+		steps:
+		  - name: Wait for Run ${{ inputs.run_id }} to Complete
+			env:
+				GH_TOKEN: ${{ github.token }}
+				GH_REPO: ${{ github.repository }}
+				GH_DEBUG: api
+			run: |
+	          echo "Watcher started for Run ID: ${{ inputs.run_id }}"
+	          
+	          # 'gh run watch' waits for the run to finish. 
+	          # We add '|| true' so this step doesn't crash when the watched run fails.
+	          gh run watch ${{ inputs.run_id }} > /dev/null 2>&1 || true
+	          
+	          echo "Target run has finished. Initiating re-run..."
+
+	      - name: Trigger Partial Re-run
+	        env:
+	          GH_TOKEN: ${{ github.token }}
+	          GH_REPO: ${{ github.repository }}
+	        run: |
+	          # --failed ensures we only retry the jobs that broke (saving time/money)
+	          gh run rerun ${{ inputs.run_id }} --failed 

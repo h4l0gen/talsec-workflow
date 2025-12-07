@@ -1,0 +1,50 @@
+name: SDK Release Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  # 1. Successful Job (Should NOT run again on retry)
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build SDK
+        run: echo "Building SDK... Success!"
+
+  # 2. Failing Job (Simulating your Android Obfuscation issue)
+  test:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run Tests
+        run: |
+          echo "Running Tests..."
+          # This simulates a crash. 
+          # In real life, this is your flaky obfuscation step.
+          exit 1 
+
+  # 3. Dependent Job (Will be skipped on failure)
+  publish:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Publish SDK
+        run: echo "Publishing to portal..."
+
+  # 4. The Retry Logic Trigger
+  auto-retry-trigger:
+    needs: [test] # This must depend on the job that might fail
+    runs-on: ubuntu-latest
+    if: failure() && fromJSON(github.run_attempt) < 3 # Run only on failure, max 3 times
+    permissions:
+      actions: write # Needed to trigger the watcher workflow
+    steps:
+      - name: Dispatch Retry Watcher
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          echo "Pipeline failed on attempt ${{ github.run_attempt }}. Triggering auto-retry..."
+          gh workflow run retry-watcher.yml -F run_id=${{ github.run_id }}
