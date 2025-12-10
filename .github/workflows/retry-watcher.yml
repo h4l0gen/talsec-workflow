@@ -19,18 +19,11 @@ jobs:
           GH_REPO: ${{ github.repository }}
           GH_DEBUG: api
         run: |
-          echo "Watcher started for Run ID: ${{ inputs.run_id }}"
 
-          # 'gh run watch' waits for the run to finish.
-          # We add '|| true' so this step doesn't crash when the watched run fails.
           gh run watch ${{ inputs.run_id }} > /dev/null 2>&1 || true
-
-          echo "Target run has finished. Initiating re-run..."
-
       - name: Trigger Partial Re-run
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: |
-          # --failed ensures we only retry the jobs that broke
           gh run rerun ${{ inputs.run_id }} --failed
