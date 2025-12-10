@@ -25,7 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Publish SDK
-        run: echo "Publishing to portal..."
+        run: echo "Publishing to portal.."
 
   auto-retry-trigger:
     needs: [test]
